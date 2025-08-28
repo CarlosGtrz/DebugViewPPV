@@ -23,6 +23,7 @@ CMessageViewerDlg::CMessageViewerDlg(const std::wstring& message,
                                      const std::wstring& process,
                                      CLogView* pLogView) :
     m_message(message),
+    m_originalMessage(message),  // Store original for re-formatting
     m_line(line),
     m_time(time),
     m_pid(pid),
@@ -42,6 +43,12 @@ BOOL CMessageViewerDlg::OnInitDialog(CWindow /*wndFocus*/, LPARAM /*lInitParam*/
     // Get the edit control and set it up
     m_editMessage = GetDlgItem(IDC_MESSAGE_TEXT);
     m_editMessage.SetReadOnly(TRUE);
+    
+    // Get the button controls
+    m_btnSplitComma = GetDlgItem(IDC_SPLIT_COMMA);
+    m_btnSplitPipe = GetDlgItem(IDC_SPLIT_PIPE);
+    m_btnFormatJSON = GetDlgItem(IDC_FORMAT_JSON);
+    m_btnFormatXML = GetDlgItem(IDC_FORMAT_XML);
     
     // Set ONLY the message text in the edit control
     m_editMessage.SetWindowText(m_message.c_str());
@@ -91,9 +98,30 @@ HBRUSH CMessageViewerDlg::OnCtlColorStatic(CDCHandle dc, CStatic /*wndStatic*/)
 
 void CMessageViewerDlg::OnGetMinMaxInfo(LPMINMAXINFO pMinMaxInfo)
 {
-    // Set minimum window size to 200x150
+    // Set minimum window size to 200x150 (with space for buttons)
     pMinMaxInfo->ptMinTrackSize.x = 200;
     pMinMaxInfo->ptMinTrackSize.y = 150;
+}
+
+void CMessageViewerDlg::OnSize(UINT nType, CSize size)
+{
+    // Let the base class handle basic resizing first
+    SetMsgHandled(FALSE);
+    
+    // Ensure text control doesn't overlap buttons (leave 18 pixels for buttons at bottom)
+    if (m_editMessage.m_hWnd)
+    {
+        RECT clientRect;
+        GetClientRect(&clientRect);
+        
+        // Resize text control to leave space for buttons (12 pixels height + 3 pixel margins)
+        int textHeight = clientRect.bottom - 18;
+        if (textHeight > 0)
+        {
+            m_editMessage.SetWindowPos(nullptr, 0, 0, clientRect.right, textHeight, 
+                SWP_NOZORDER | SWP_NOMOVE);
+        }
+    }
 }
 
 void CMessageViewerDlg::OnClose()
@@ -190,6 +218,384 @@ void CMessageViewerDlg::SetMessageFont(HFONT hFont)
 {
     if (m_editMessage.m_hWnd && hFont)
         m_editMessage.SetFont(hFont);
+}
+
+void CMessageViewerDlg::OnSplitComma(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
+{
+    std::wstring formatted = FormatWithSplitChars(m_originalMessage, L',');
+    m_editMessage.SetWindowText(formatted.c_str());
+}
+
+void CMessageViewerDlg::OnSplitPipe(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
+{
+    std::wstring formatted = FormatWithSplitChars(m_originalMessage, L'|');
+    m_editMessage.SetWindowText(formatted.c_str());
+}
+
+void CMessageViewerDlg::OnFormatJSON(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
+{
+    std::wstring formatted = FormatJSON(m_originalMessage);
+    m_editMessage.SetWindowText(formatted.c_str());
+}
+
+void CMessageViewerDlg::OnFormatXML(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
+{
+    std::wstring formatted = FormatXML(m_originalMessage);
+    m_editMessage.SetWindowText(formatted.c_str());
+}
+
+std::wstring CMessageViewerDlg::FormatWithSplitChars(const std::wstring& text, wchar_t splitChar)
+{
+    std::wstring result = text;
+    std::wstring search(1, splitChar);
+    std::wstring replace = search + L"\r\n";
+    
+    size_t pos = 0;
+    while ((pos = result.find(search, pos)) != std::wstring::npos)
+    {
+        result.replace(pos, search.length(), replace);
+        pos += replace.length();
+    }
+    
+    return result;
+}
+
+std::wstring CMessageViewerDlg::FormatJSON(const std::wstring& text)
+{
+    std::wstring result;
+    size_t jsonStart = text.find_first_of(L"{[");
+    
+    if (jsonStart == std::wstring::npos)
+    {
+        return text; // No JSON found
+    }
+    
+    // Add text before JSON with line separator
+    if (jsonStart > 0)
+    {
+        result = text.substr(0, jsonStart);
+        if (!result.empty() && result.back() != L'\n')
+            result += L"\r\n";
+    }
+    
+    // Find matching closing bracket
+    size_t jsonEnd = jsonStart;
+    int braceCount = 0;
+    int bracketCount = 0;
+    bool inString = false;
+    bool escaped = false;
+    
+    for (size_t i = jsonStart; i < text.length(); ++i)
+    {
+        wchar_t c = text[i];
+        
+        if (!inString)
+        {
+            if (c == L'{') braceCount++;
+            else if (c == L'}') braceCount--;
+            else if (c == L'[') bracketCount++;
+            else if (c == L']') bracketCount--;
+            else if (c == L'"') inString = true;
+        }
+        else
+        {
+            if (escaped)
+                escaped = false;
+            else if (c == L'\\')
+                escaped = true;
+            else if (c == L'"')
+                inString = false;
+        }
+        
+        // Stop at syntax error or when all brackets are closed
+        if ((braceCount < 0 || bracketCount < 0) || (braceCount == 0 && bracketCount == 0 && i > jsonStart))
+        {
+            jsonEnd = i;
+            break;
+        }
+    }
+    
+    // Extract and format JSON portion
+    if (jsonEnd > jsonStart)
+    {
+        std::wstring jsonText = text.substr(jsonStart, jsonEnd - jsonStart + 1);
+        std::wstring formattedJson;
+        int indent = 0;
+        inString = false;
+        escaped = false;
+        
+        for (size_t i = 0; i < jsonText.length(); ++i)
+        {
+            wchar_t c = jsonText[i];
+            
+            if (!inString)
+            {
+                if (c == L'{' || c == L'[')
+                {
+                    formattedJson += c;
+                    formattedJson += L"\r\n";
+                    indent++;
+                    for (int j = 0; j < indent; ++j)
+                        formattedJson += L"  ";
+                }
+                else if (c == L'}' || c == L']')
+                {
+                    if (!formattedJson.empty() && formattedJson.back() == L' ')
+                    {
+                        // Remove trailing spaces
+                        while (!formattedJson.empty() && (formattedJson.back() == L' ' || formattedJson.back() == L'\t'))
+                            formattedJson.pop_back();
+                    }
+                    formattedJson += L"\r\n";
+                    indent--;
+                    for (int j = 0; j < indent; ++j)
+                        formattedJson += L"  ";
+                    formattedJson += c;
+                }
+                else if (c == L',')
+                {
+                    formattedJson += c;
+                    formattedJson += L"\r\n";
+                    for (int j = 0; j < indent; ++j)
+                        formattedJson += L"  ";
+                }
+                else if (c == L':')
+                {
+                    formattedJson += c;
+                    formattedJson += L" ";
+                }
+                else if (c == L'"')
+                {
+                    formattedJson += c;
+                    inString = true;
+                }
+                else if (c != L' ' && c != L'\t' && c != L'\r' && c != L'\n')
+                {
+                    formattedJson += c;
+                }
+            }
+            else
+            {
+                formattedJson += c;
+                if (escaped)
+                    escaped = false;
+                else if (c == L'\\')
+                    escaped = true;
+                else if (c == L'"')
+                    inString = false;
+            }
+        }
+        
+        result += formattedJson;
+        
+        // Add text after JSON with line separator
+        if (jsonEnd + 1 < text.length())
+        {
+            result += L"\r\n";
+            result += text.substr(jsonEnd + 1);
+        }
+    }
+    else
+    {
+        result += text.substr(jsonStart); // Include rest as-is if formatting failed
+    }
+    
+    return result;
+}
+
+std::wstring CMessageViewerDlg::FormatXML(const std::wstring& text)
+{
+    std::wstring result;
+    size_t xmlStart = text.find(L'<');
+    
+    if (xmlStart == std::wstring::npos)
+    {
+        return text; // No XML found
+    }
+    
+    // Add text before XML with line separator
+    if (xmlStart > 0)
+    {
+        result = text.substr(0, xmlStart);
+        if (!result.empty() && result.back() != L'\n')
+            result += L"\r\n";
+    }
+    
+    // Find end of XML content
+    size_t xmlEnd = text.find_last_of(L'>');
+    if (xmlEnd == std::wstring::npos || xmlEnd <= xmlStart)
+    {
+        return text; // Invalid XML structure
+    }
+    
+    std::wstring xmlText = text.substr(xmlStart, xmlEnd - xmlStart + 1);
+    std::wstring formattedXml;
+    int indent = 0;
+    
+    size_t pos = 0;
+    while (pos < xmlText.length())
+    {
+        if (xmlText[pos] == L'<')
+        {
+            // Find end of tag
+            size_t tagEnd = xmlText.find(L'>', pos);
+            if (tagEnd == std::wstring::npos)
+                break;
+                
+            std::wstring tag = xmlText.substr(pos, tagEnd - pos + 1);
+            
+            // Check tag type
+            bool isClosingTag = (tag.length() > 1 && tag[1] == L'/');
+            bool isProcessingInstruction = (tag.length() > 1 && tag[1] == L'?');
+            bool isSelfClosing = (tag.length() > 2 && tag[tag.length() - 2] == L'/');
+            bool isComment = (tag.length() > 3 && tag.substr(1, 3) == L"!--");
+            
+            // Add indentation for non-processing instructions
+            if (!isProcessingInstruction)
+            {
+                if (isClosingTag)
+                    indent--;
+                    
+                if (!formattedXml.empty())
+                    formattedXml += L"\r\n";
+                    
+                for (int i = 0; i < indent; ++i)
+                    formattedXml += L"  ";
+            }
+            else if (!formattedXml.empty())
+            {
+                formattedXml += L"\r\n";
+            }
+            
+            // Format the tag with attributes
+            if (!isProcessingInstruction && !isComment && !isClosingTag)
+            {
+                // Parse tag for attributes
+                size_t spacePos = tag.find(L' ');
+                if (spacePos != std::wstring::npos && spacePos < tag.length() - 1)
+                {
+                    // Has attributes - format them
+                    std::wstring tagName = tag.substr(0, spacePos);
+                    std::wstring attributes = tag.substr(spacePos + 1, tag.length() - spacePos - 2); // Remove > at end
+                    if (isSelfClosing && attributes.length() > 1)
+                        attributes = attributes.substr(0, attributes.length() - 1); // Remove / before >
+                    
+                    formattedXml += tagName;
+                    
+                    // Calculate alignment for attributes (tag name + 1 space)
+                    std::wstring alignmentSpaces;
+                    for (int i = 0; i < indent; ++i)
+                        alignmentSpaces += L"  ";
+                    for (size_t i = 1; i < tagName.length(); ++i) // Skip '<'
+                        alignmentSpaces += L" ";
+                    alignmentSpaces += L" ";
+                    
+                    // Parse and format attributes
+                    size_t attrPos = 0;
+                    bool firstAttr = true;
+                    bool inQuote = false;
+                    wchar_t quoteChar = L'\0';
+                    
+                    while (attrPos < attributes.length())
+                    {
+                        if (!inQuote && (attributes[attrPos] == L'"' || attributes[attrPos] == L'\''))
+                        {
+                            inQuote = true;
+                            quoteChar = attributes[attrPos];
+                        }
+                        else if (inQuote && attributes[attrPos] == quoteChar)
+                        {
+                            inQuote = false;
+                        }
+                        else if (!inQuote && attributes[attrPos] == L' ')
+                        {
+                            // Look for next non-space character
+                            size_t nextAttr = attrPos + 1;
+                            while (nextAttr < attributes.length() && attributes[nextAttr] == L' ')
+                                nextAttr++;
+                                
+                            if (nextAttr < attributes.length())
+                            {
+                                // Found next attribute
+                                if (firstAttr)
+                                {
+                                    formattedXml += L" ";
+                                    firstAttr = false;
+                                }
+                                else
+                                {
+                                    formattedXml += L"\r\n" + alignmentSpaces;
+                                }
+                                attrPos = nextAttr - 1; // -1 because we'll increment at end of loop
+                            }
+                        }
+                        else
+                        {
+                            if (firstAttr && attributes[attrPos] != L' ')
+                            {
+                                formattedXml += L" ";
+                                firstAttr = false;
+                            }
+                            formattedXml += attributes[attrPos];
+                        }
+                        attrPos++;
+                    }
+                    
+                    if (isSelfClosing)
+                        formattedXml += L" />";
+                    else
+                        formattedXml += L">";
+                }
+                else
+                {
+                    // No attributes
+                    formattedXml += tag;
+                }
+            }
+            else
+            {
+                // Processing instruction, comment, or closing tag
+                formattedXml += tag;
+            }
+            
+            // Update indent for opening tags
+            if (!isProcessingInstruction && !isComment && !isClosingTag && !isSelfClosing)
+                indent++;
+                
+            pos = tagEnd + 1;
+            
+            // Add content between tags
+            size_t nextTag = xmlText.find(L'<', pos);
+            if (nextTag != std::wstring::npos && nextTag > pos)
+            {
+                std::wstring content = xmlText.substr(pos, nextTag - pos);
+                // Trim whitespace
+                size_t start = content.find_first_not_of(L" \t\r\n");
+                if (start != std::wstring::npos)
+                {
+                    size_t end = content.find_last_not_of(L" \t\r\n");
+                    content = content.substr(start, end - start + 1);
+                    formattedXml += content;
+                }
+                pos = nextTag;
+            }
+        }
+        else
+        {
+            pos++;
+        }
+    }
+    
+    result += formattedXml;
+    
+    // Add text after XML with line separator
+    if (xmlEnd + 1 < text.length())
+    {
+        result += L"\r\n";
+        result += text.substr(xmlEnd + 1);
+    }
+    
+    return result;
 }
 
 } // namespace debugviewpp

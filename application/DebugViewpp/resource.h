@@ -130,6 +130,10 @@
 #define IDC_MESSAGE_TEXT 319
 #define ID_MESSAGE_EDIT_COPY 32861
 #define ID_MESSAGE_EDIT_SELECTALL 32862
+#define IDC_SPLIT_COMMA 320
+#define IDC_SPLIT_PIPE 321
+#define IDC_FORMAT_JSON 322
+#define IDC_FORMAT_XML 323
 
 // Next default values for new objects
 //
