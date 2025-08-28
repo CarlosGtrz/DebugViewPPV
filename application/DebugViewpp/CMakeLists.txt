@@ -13,6 +13,7 @@ add_executable(Debugviewpp
     HistoryDlg.cpp
     LogView.cpp
     MainFrame.cpp
+    MessageViewerDlg.cpp
     RegExDlg.cpp
     RenameProcessDlg.cpp
     RunDlg.cpp

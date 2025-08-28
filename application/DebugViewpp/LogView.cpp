@@ -15,6 +15,7 @@
 #include "resource.h"
 #include "MainFrame.h"
 #include "RenameProcessDlg.h"
+#include "MessageViewerDlg.h"
 //#include "VersionHelpers.h"  // IsWindows10OrGreater ??
 
 #include <boost/algorithm/string.hpp>
@@ -22,9 +23,9 @@
 
 #include <iomanip>
 #include <array>
+#include <algorithm>
 #include <regex>
 #include <unordered_set>
-#include <algorithm>
 #include <utility>
 
 namespace fusion {
@@ -330,6 +331,9 @@ LRESULT CLogView::OnCreate(const CREATESTRUCT* /*pCreate*/)
 
 CLogView::~CLogView()
 {
+    // Close all message viewer windows before destruction
+    CloseAllMessageViewers();
+    
     m_pDropTargetSupport->Unregister();
 }
 
@@ -1143,16 +1147,62 @@ void CLogView::OnViewMessage(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl
     if (selectedIndex == -1)
         return; // No selection
         
-    // Get the message text for the selected line
-    std::wstring messageText = GetLineAsText(selectedIndex);
+    // Get all column values
+    std::wstring line = GetColumnText(selectedIndex, Column::Line);
+    std::wstring time = GetColumnText(selectedIndex, Column::Time);
+    std::wstring pid = GetColumnText(selectedIndex, Column::Pid);
+    std::wstring process = GetColumnText(selectedIndex, Column::Process);
+    std::wstring message = GetColumnText(selectedIndex, Column::Message);
     
-    // Create a simple message box to display the message
-    MessageBox(messageText.c_str(), L"View Message", MB_OK | MB_ICONINFORMATION);
+    // Create a new message viewer dialog
+    auto pViewer = std::make_unique<CMessageViewerDlg>(message, line, time, pid, process, this);
+    
+    // Create the modeless dialog
+    if (pViewer->Create(GetParent()))
+    {
+        pViewer->ShowWindow(SW_SHOW);
+        
+        // Store the viewer in our collection (transfer ownership)
+        m_messageViewers.push_back(std::move(pViewer));
+    }
 }
 
 void CLogView::OnViewCopy(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
 {
     Copy();
+}
+
+void CLogView::OnMessageViewerClosing(CMessageViewerDlg* pViewer)
+{
+    // Remove the viewer from our collection
+    auto it = std::find_if(m_messageViewers.begin(), m_messageViewers.end(),
+        [pViewer](const std::unique_ptr<CMessageViewerDlg>& ptr) {
+            return ptr.get() == pViewer;
+        });
+    
+    if (it != m_messageViewers.end())
+    {
+        // Release ownership before erasing to prevent double deletion
+        it->release();
+        m_messageViewers.erase(it);
+    }
+}
+
+void CLogView::CloseAllMessageViewers()
+{
+    // Close all message viewer windows
+    for (auto& pViewer : m_messageViewers)
+    {
+        if (pViewer && ::IsWindow(pViewer->m_hWnd))
+        {
+            // Set LogView pointer to null to prevent callback during destruction
+            pViewer->SetLogView(nullptr);
+            pViewer->DestroyWindow();
+        }
+    }
+    
+    // Clear the collection
+    m_messageViewers.clear();
 }
 
 void CLogView::OnViewAutoScroll(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)

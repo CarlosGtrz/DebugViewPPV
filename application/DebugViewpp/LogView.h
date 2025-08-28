@@ -19,11 +19,13 @@
 
 #include <vector>
 #include <deque>
+#include <memory>
 
 namespace fusion {
 namespace debugviewpp {
 
 class CMainFrame;
+class CMessageViewerDlg;
 
 struct SelectionInfo
 {
@@ -204,6 +206,10 @@ public:
 
     SelectionInfo GetViewRange() const;
     SelectionInfo GetSelectedRange() const;
+    
+    // Message viewer window management
+    void CloseAllMessageViewers();
+    void OnMessageViewerClosing(CMessageViewerDlg* pViewer);
 
     void MeasureItem(MEASUREITEMSTRUCT* pMeasureItemStruct) const;
     void DrawItem(DRAWITEMSTRUCT* pDrawItemStruct) const;
@@ -333,6 +339,9 @@ private:
     int m_scrollX;
     std::wstring m_dispInfoText;
     Win32::ComObjectPtr<DropTargetSupport> m_pDropTargetSupport;
+    
+    // Message viewer windows
+    std::vector<std::unique_ptr<CMessageViewerDlg>> m_messageViewers;
 };
 
 } // namespace debugviewpp

@@ -273,6 +273,12 @@ LRESULT CMainFrame::OnCreate(const CREATESTRUCT* /*pCreate*/)
 
 void CMainFrame::OnClose()
 {
+    // Close all message viewer windows for all tabs
+    for (int i = 0; i < GetViewCount(); ++i)
+    {
+        GetView(i).CloseAllMessageViewers();
+    }
+    
     SaveSettings();
     DestroyWindow();
 
