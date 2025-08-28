@@ -151,6 +151,7 @@ BEGIN_MSG_MAP2(CLogView)
     COMMAND_ID_HANDLER_EX(ID_VIEW_SELECTALL, OnViewSelectAll)
     COMMAND_ID_HANDLER_EX(ID_VIEW_COPY, OnViewCopy)
     COMMAND_ID_HANDLER_EX(ID_VIEW_COPY_MESSAGES, OnViewCopyMessages)
+    COMMAND_ID_HANDLER_EX(ID_VIEW_MESSAGE, OnViewMessage)
     COMMAND_ID_HANDLER_EX(ID_VIEW_SCROLL, OnViewAutoScroll)
     COMMAND_ID_HANDLER_EX(ID_VIEW_SCROLL_STOP, OnViewAutoScrollStop)
     COMMAND_ID_HANDLER_EX(ID_VIEW_TIME, OnViewTime)
@@ -1133,6 +1134,20 @@ void CLogView::OnViewSelectAll(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndC
 void CLogView::OnViewCopyMessages(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
 {
     CopyMessagesToClipboard();
+}
+
+void CLogView::OnViewMessage(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
+{
+    // Get the currently selected item(s)
+    int selectedIndex = GetNextItem(-1, LVNI_SELECTED);
+    if (selectedIndex == -1)
+        return; // No selection
+        
+    // Get the message text for the selected line
+    std::wstring messageText = GetLineAsText(selectedIndex);
+    
+    // Create a simple message box to display the message
+    MessageBox(messageText.c_str(), L"View Message", MB_OK | MB_ICONINFORMATION);
 }
 
 void CLogView::OnViewCopy(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)

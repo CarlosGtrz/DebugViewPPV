@@ -178,6 +178,7 @@ BEGIN
         MENUITEM "Select &All\tCtrl+A",         ID_VIEW_SELECTALL
         MENUITEM "&Copy\tCtrl+C",               ID_VIEW_COPY
         MENUITEM "Copy &Messages\tCtrl+Shift+C",ID_VIEW_COPY_MESSAGES
+        MENUITEM "View &Message\tCtrl+M",       ID_VIEW_MESSAGE
     END
 END
 
@@ -200,6 +201,7 @@ BEGIN
         MENUITEM "Select &All\tCtrl+A",         ID_VIEW_SELECTALL
         MENUITEM "&Copy\tCtrl+C",               ID_VIEW_COPY
         MENUITEM "Copy &Messages\tCtrl+Shift+C",ID_VIEW_COPY_MESSAGES
+        MENUITEM "View &Message\tCtrl+M",       ID_VIEW_MESSAGE
     END
 END
 
@@ -553,6 +555,7 @@ BEGIN
     "E",            ID_VIEW_FILTER_EXCLUDE, VIRTKEY, CONTROL, NOINVERT
     "K",            ID_VIEW_FILTER_TOKEN,   VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      ID_VIEW_FILTER_EXCLUDE, VIRTKEY, CONTROL, NOINVERT
+    "M",            ID_VIEW_MESSAGE,        VIRTKEY, CONTROL, NOINVERT
 END
 
 
