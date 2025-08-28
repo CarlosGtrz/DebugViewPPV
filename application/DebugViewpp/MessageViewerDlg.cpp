@@ -6,6 +6,13 @@
 #include "MessageViewerDlg.h"
 #include "LogView.h"
 
+// Static variables to track window positions for horizontal tiling
+static int s_currentX = 10;  // Current X position
+static int s_currentY = 10;  // Current Y position
+static const int WINDOW_WIDTH = 450;
+static const int WINDOW_HEIGHT = 200;
+static const int MARGIN = 10;  // Margin between windows and screen edges
+
 namespace fusion {
 namespace debugviewpp {
 
@@ -43,11 +50,33 @@ BOOL CMessageViewerDlg::OnInitDialog(CWindow /*wndFocus*/, LPARAM /*lInitParam*/
     std::wstring title = L"Line " + m_line + L" - " + m_time + L" [" + m_pid + L"] " + m_process;
     SetWindowText(title.c_str());
     
-    // Set initial window size (reduced from 600x400 to 300x200)
-    SetWindowPos(nullptr, 0, 0, 300, 200, SWP_NOMOVE | SWP_NOZORDER);
-    
-    // Center the dialog on the parent window
-    CenterWindow(GetParent());
+    // Get screen dimensions
+    RECT desktopRect;
+    ::GetWindowRect(::GetDesktopWindow(), &desktopRect);
+    int screenWidth = desktopRect.right - desktopRect.left;
+    int screenHeight = desktopRect.bottom - desktopRect.top;
+
+    // Check if window would fit on current row
+    if (s_currentX + WINDOW_WIDTH > screenWidth - MARGIN)
+    {
+        // Move to next row
+        s_currentX = MARGIN;
+        s_currentY += WINDOW_HEIGHT + MARGIN;
+        
+        // Check if we've reached bottom of screen
+        if (s_currentY + WINDOW_HEIGHT > screenHeight - MARGIN)
+        {
+            // Reset to top-left corner
+            s_currentX = MARGIN;
+            s_currentY = MARGIN;
+        }
+    }
+
+    // Position the window at calculated location
+    SetWindowPos(nullptr, s_currentX, s_currentY, WINDOW_WIDTH, WINDOW_HEIGHT, SWP_NOZORDER);
+
+    // Update X position for next window (move right)
+    s_currentX += WINDOW_WIDTH + MARGIN;
     
     return TRUE;
 }
