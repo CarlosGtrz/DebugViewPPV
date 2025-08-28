@@ -1157,9 +1157,12 @@ void CLogView::OnViewMessage(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl
     // Create a new message viewer dialog
     auto pViewer = std::make_unique<CMessageViewerDlg>(message, line, time, pid, process, this);
     
-    // Create the modeless dialog
-    if (pViewer->Create(GetParent()))
+    // Create the modeless dialog without owner for independent z-order
+    if (pViewer->Create(NULL))
     {
+        // Set the font to match the main window
+        pViewer->SetMessageFont(GetFont());
+        
         pViewer->ShowWindow(SW_SHOW);
         
         // Store the viewer in our collection (transfer ownership)

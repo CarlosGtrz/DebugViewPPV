@@ -29,6 +29,9 @@ BOOL CMessageViewerDlg::OnInitDialog(CWindow /*wndFocus*/, LPARAM /*lInitParam*/
     // Initialize the dialog resizing
     DlgResize_Init();
     
+    // Create background brush with explicit white color to match main window
+    m_backgroundBrush.CreateSolidBrush(RGB(255, 255, 255));
+    
     // Get the edit control and set it up
     m_editMessage = GetDlgItem(IDC_MESSAGE_TEXT);
     m_editMessage.SetReadOnly(TRUE);
@@ -40,13 +43,28 @@ BOOL CMessageViewerDlg::OnInitDialog(CWindow /*wndFocus*/, LPARAM /*lInitParam*/
     std::wstring title = L"Line " + m_line + L" - " + m_time + L" [" + m_pid + L"] " + m_process;
     SetWindowText(title.c_str());
     
-    // Set initial window size
-    SetWindowPos(nullptr, 0, 0, 600, 400, SWP_NOMOVE | SWP_NOZORDER);
+    // Set initial window size (reduced from 600x400 to 300x200)
+    SetWindowPos(nullptr, 0, 0, 300, 200, SWP_NOMOVE | SWP_NOZORDER);
     
     // Center the dialog on the parent window
     CenterWindow(GetParent());
     
     return TRUE;
+}
+
+HBRUSH CMessageViewerDlg::OnCtlColorStatic(CDCHandle dc, CStatic /*wndStatic*/)
+{
+    // Set explicit colors to match main window appearance
+    dc.SetTextColor(RGB(0, 0, 0));        // Pure black text
+    dc.SetBkColor(RGB(255, 255, 255));    // Pure white background
+    return m_backgroundBrush;
+}
+
+void CMessageViewerDlg::OnGetMinMaxInfo(LPMINMAXINFO pMinMaxInfo)
+{
+    // Set minimum window size to 200x150
+    pMinMaxInfo->ptMinTrackSize.x = 200;
+    pMinMaxInfo->ptMinTrackSize.y = 150;
 }
 
 void CMessageViewerDlg::OnClose()
@@ -137,6 +155,12 @@ BOOL CMessageViewerDlg::PreTranslateMessage(MSG* pMsg)
     }
     
     return FALSE;
+}
+
+void CMessageViewerDlg::SetMessageFont(HFONT hFont)
+{
+    if (m_editMessage.m_hWnd && hFont)
+        m_editMessage.SetFont(hFont);
 }
 
 } // namespace debugviewpp

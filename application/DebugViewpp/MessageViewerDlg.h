@@ -8,6 +8,7 @@
 #include "CobaltFusion/AtlWinExt.h"
 #include "resource.h"
 #include "atleverything.h"
+#include "DebugViewppLib/Colors.h"
 #include <string>
 
 namespace fusion {
@@ -35,6 +36,8 @@ public:
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_CLOSE(OnClose)
         MSG_WM_CONTEXTMENU(OnContextMenu)
+        MSG_WM_CTLCOLORSTATIC(OnCtlColorStatic)
+        MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
         COMMAND_ID_HANDLER_EX(ID_MESSAGE_EDIT_COPY, OnEditCopy)
         COMMAND_ID_HANDLER_EX(ID_MESSAGE_EDIT_SELECTALL, OnEditCopy)
         COMMAND_ID_HANDLER_EX(IDCANCEL, OnCancel)
@@ -48,6 +51,8 @@ public:
     BOOL OnInitDialog(CWindow wndFocus, LPARAM lInitParam);
     void OnClose();
     void OnContextMenu(HWND hWnd, CPoint pt);
+    HBRUSH OnCtlColorStatic(CDCHandle dc, CStatic wndStatic);
+    void OnGetMinMaxInfo(LPMINMAXINFO pMinMaxInfo);
     void OnEditCopy(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnCancel(UINT uNotifyCode, int nID, CWindow wndCtl);
 
@@ -55,6 +60,9 @@ public:
     
     // Public method to reset LogView pointer (used during cleanup)
     void SetLogView(CLogView* pLogView) { m_pLogView = pLogView; }
+    
+    // Public method to set font to match main window
+    void SetMessageFont(HFONT hFont);
 
 private:
     std::wstring m_message;
@@ -64,6 +72,7 @@ private:
     std::wstring m_process;
     CLogView* m_pLogView;
     CEdit m_editMessage;
+    CBrush m_backgroundBrush;
 };
 
 } // namespace debugviewpp
