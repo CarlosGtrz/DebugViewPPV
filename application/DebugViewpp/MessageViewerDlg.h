@@ -78,6 +78,9 @@ public:
     
     // Public method to set font to match main window
     void SetMessageFont(HFONT hFont);
+    
+    // Static method to reset window positioning (used when closing all message viewers)
+    static void ResetWindowPositioning();
 
 private:
     // Formatting helper methods

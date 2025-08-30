@@ -179,6 +179,7 @@ BEGIN
         MENUITEM "&Copy\tCtrl+C",               ID_VIEW_COPY
         MENUITEM "Copy &Messages\tCtrl+Shift+C",ID_VIEW_COPY_MESSAGES
         MENUITEM "View &Message\tCtrl+M",       ID_VIEW_MESSAGE
+        MENUITEM "Close &Messages",             ID_VIEW_CLOSE_MESSAGES
     END
 END
 
@@ -202,6 +203,7 @@ BEGIN
         MENUITEM "&Copy\tCtrl+C",               ID_VIEW_COPY
         MENUITEM "Copy &Messages\tCtrl+Shift+C",ID_VIEW_COPY_MESSAGES
         MENUITEM "View &Message\tCtrl+M",       ID_VIEW_MESSAGE
+        MENUITEM "Close &Messages",             ID_VIEW_CLOSE_MESSAGES
     END
 END
 

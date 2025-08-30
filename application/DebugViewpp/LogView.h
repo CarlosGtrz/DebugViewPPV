@@ -245,6 +245,7 @@ private:
     void OnViewSelectAll(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnViewCopyMessages(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnViewMessage(UINT uNotifyCode, int nID, CWindow wndCtl);
+    void OnViewCloseMessages(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnViewCopy(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnViewAutoScroll(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnViewAutoScrollStop(UINT uNotifyCode, int nID, CWindow wndCtl);

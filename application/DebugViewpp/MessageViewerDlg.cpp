@@ -629,5 +629,12 @@ std::wstring CMessageViewerDlg::FormatXML(const std::wstring& text)
     return result;
 }
 
+void CMessageViewerDlg::ResetWindowPositioning()
+{
+    s_currentX = MARGIN;
+    s_currentY = MARGIN;
+    s_currentMonitor = NULL;
+}
+
 } // namespace debugviewpp
 } // namespace fusion

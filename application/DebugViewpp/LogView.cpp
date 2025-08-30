@@ -153,6 +153,7 @@ BEGIN_MSG_MAP2(CLogView)
     COMMAND_ID_HANDLER_EX(ID_VIEW_COPY, OnViewCopy)
     COMMAND_ID_HANDLER_EX(ID_VIEW_COPY_MESSAGES, OnViewCopyMessages)
     COMMAND_ID_HANDLER_EX(ID_VIEW_MESSAGE, OnViewMessage)
+    COMMAND_ID_HANDLER_EX(ID_VIEW_CLOSE_MESSAGES, OnViewCloseMessages)
     COMMAND_ID_HANDLER_EX(ID_VIEW_SCROLL, OnViewAutoScroll)
     COMMAND_ID_HANDLER_EX(ID_VIEW_SCROLL_STOP, OnViewAutoScrollStop)
     COMMAND_ID_HANDLER_EX(ID_VIEW_TIME, OnViewTime)
@@ -1168,6 +1169,13 @@ void CLogView::OnViewMessage(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl
         // Store the viewer in our collection (transfer ownership)
         m_messageViewers.push_back(std::move(pViewer));
     }
+}
+
+void CLogView::OnViewCloseMessages(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
+{
+    // Close all message viewers for this LogView and reset tiling positions
+    CloseAllMessageViewers();
+    CMessageViewerDlg::ResetWindowPositioning();
 }
 
 void CLogView::OnViewCopy(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)

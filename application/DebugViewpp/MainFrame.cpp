@@ -37,6 +37,7 @@
 #include "AboutDlg.h"
 #include "FileOptionDlg.h"
 #include "LogView.h"
+#include "MessageViewerDlg.h"
 #include "MainFrame.h"
 
 namespace fusion {
@@ -134,6 +135,7 @@ BEGIN_MSG_MAP2(CMainFrame)
     COMMAND_ID_HANDLER_EX(ID_VIEW_FIND, OnViewFind)
     COMMAND_ID_HANDLER_EX(ID_VIEW_FILTER, OnViewFilter)
     COMMAND_ID_HANDLER_EX(ID_VIEW_CLOSE, OnViewClose)
+    COMMAND_ID_HANDLER_EX(ID_VIEW_CLOSE_MESSAGES, OnViewCloseMessages)
     COMMAND_ID_HANDLER_EX(ID_VIEW_DUPLICATE, OnViewDuplicate)
     COMMAND_ID_HANDLER_EX(ID_LOG_SOURCES, OnSources)
     COMMAND_ID_HANDLER_EX(ID_OPTIONS_LINKVIEWS, OnLinkViews)
@@ -1546,6 +1548,16 @@ void CMainFrame::OnViewFilter(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCt
 void CMainFrame::OnViewClose(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
 {
     CloseView(GetTabCtrl().GetCurSel());
+}
+
+void CMainFrame::OnViewCloseMessages(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
+{
+    // Close all message viewers across all tabs and reset tiling positions
+    for (int i = 0; i < GetViewCount(); ++i)
+    {
+        GetView(i).CloseAllMessageViewers();
+    }
+    CMessageViewerDlg::ResetWindowPositioning();
 }
 
 void CMainFrame::OnViewDuplicate(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
