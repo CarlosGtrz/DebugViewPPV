@@ -488,7 +488,7 @@ std::wstring CMessageViewerDlg::FormatXML(const std::wstring& text)
                         alignmentSpaces += L"  ";
                     for (size_t i = 1; i < tagName.length(); ++i) // Skip '<'
                         alignmentSpaces += L" ";
-                    alignmentSpaces += L" ";
+                    alignmentSpaces += L"  ";
                     
                     // Parse and format attributes
                     size_t attrPos = 0;
