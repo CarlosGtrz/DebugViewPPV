@@ -9,6 +9,7 @@
 // Static variables to track window positions for horizontal tiling
 static int s_currentX = 10;  // Current X position
 static int s_currentY = 10;  // Current Y position
+static HMONITOR s_currentMonitor = NULL;  // Track current monitor
 static const int WINDOW_WIDTH = 450;
 static const int WINDOW_HEIGHT = 200;
 static const int MARGIN = 10;  // Margin between windows and screen edges
@@ -21,14 +22,16 @@ CMessageViewerDlg::CMessageViewerDlg(const std::wstring& message,
                                      const std::wstring& time,
                                      const std::wstring& pid,
                                      const std::wstring& process,
-                                     CLogView* pLogView) :
+                                     CLogView* pLogView,
+                                     HWND hParentWnd) :
     m_message(message),
     m_originalMessage(message),  // Store original for re-formatting
     m_line(line),
     m_time(time),
     m_pid(pid),
     m_process(process),
-    m_pLogView(pLogView)
+    m_pLogView(pLogView),
+    m_hParentWnd(hParentWnd)
 {
 }
 
@@ -57,30 +60,58 @@ BOOL CMessageViewerDlg::OnInitDialog(CWindow /*wndFocus*/, LPARAM /*lInitParam*/
     std::wstring title = L"Line " + m_line + L" - " + m_time + L" [" + m_pid + L"] " + m_process;
     SetWindowText(title.c_str());
     
-    // Get screen dimensions
-    RECT desktopRect;
-    ::GetWindowRect(::GetDesktopWindow(), &desktopRect);
-    int screenWidth = desktopRect.right - desktopRect.left;
-    int screenHeight = desktopRect.bottom - desktopRect.top;
+    // Get the monitor that contains the parent window
+    HMONITOR hMonitor = MonitorFromWindow(m_hParentWnd, MONITOR_DEFAULTTONEAREST);
+    
+    // If we switched to a different monitor, reset positioning
+    if (s_currentMonitor != hMonitor)
+    {
+        s_currentMonitor = hMonitor;
+        s_currentX = MARGIN;
+        s_currentY = MARGIN;
+    }
+    
+    // Get monitor information
+    MONITORINFO monitorInfo = {};
+    monitorInfo.cbSize = sizeof(MONITORINFO);
+    if (!GetMonitorInfo(hMonitor, &monitorInfo))
+    {
+        // Fallback to desktop if GetMonitorInfo fails
+        ::GetWindowRect(::GetDesktopWindow(), &monitorInfo.rcWork);
+    }
+    
+    // Use work area (excludes taskbar) for positioning
+    int monitorLeft = monitorInfo.rcWork.left;
+    int monitorTop = monitorInfo.rcWork.top;
+    int monitorWidth = monitorInfo.rcWork.right - monitorInfo.rcWork.left;
+    int monitorHeight = monitorInfo.rcWork.bottom - monitorInfo.rcWork.top;
+    
+    // Adjust static positions to be relative to this monitor
+    int absoluteX = monitorLeft + s_currentX;
+    int absoluteY = monitorTop + s_currentY;
 
-    // Check if window would fit on current row
-    if (s_currentX + WINDOW_WIDTH > screenWidth - MARGIN)
+    // Check if window would fit on current row within this monitor
+    if (s_currentX + WINDOW_WIDTH > monitorWidth - MARGIN)
     {
         // Move to next row
         s_currentX = MARGIN;
         s_currentY += WINDOW_HEIGHT + MARGIN;
         
-        // Check if we've reached bottom of screen
-        if (s_currentY + WINDOW_HEIGHT > screenHeight - MARGIN)
+        // Check if we've reached bottom of monitor
+        if (s_currentY + WINDOW_HEIGHT > monitorHeight - MARGIN)
         {
-            // Reset to top-left corner
+            // Reset to top-left corner of monitor
             s_currentX = MARGIN;
             s_currentY = MARGIN;
         }
+        
+        // Recalculate absolute position
+        absoluteX = monitorLeft + s_currentX;
+        absoluteY = monitorTop + s_currentY;
     }
 
     // Position the window at calculated location
-    SetWindowPos(nullptr, s_currentX, s_currentY, WINDOW_WIDTH, WINDOW_HEIGHT, SWP_NOZORDER);
+    SetWindowPos(nullptr, absoluteX, absoluteY, WINDOW_WIDTH, WINDOW_HEIGHT, SWP_NOZORDER);
 
     // Update X position for next window (move right)
     s_currentX += WINDOW_WIDTH + MARGIN;

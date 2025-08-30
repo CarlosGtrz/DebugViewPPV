@@ -1155,7 +1155,7 @@ void CLogView::OnViewMessage(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl
     std::wstring message = GetColumnText(selectedIndex, Column::Message);
     
     // Create a new message viewer dialog
-    auto pViewer = std::make_unique<CMessageViewerDlg>(message, line, time, pid, process, this);
+    auto pViewer = std::make_unique<CMessageViewerDlg>(message, line, time, pid, process, this, m_hWnd);
     
     // Create the modeless dialog without owner for independent z-order
     if (pViewer->Create(NULL))

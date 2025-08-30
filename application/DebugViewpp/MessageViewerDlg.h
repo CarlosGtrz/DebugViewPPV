@@ -25,7 +25,8 @@ public:
                               const std::wstring& time,
                               const std::wstring& pid, 
                               const std::wstring& process,
-                              CLogView* pLogView);
+                              CLogView* pLogView,
+                              HWND hParentWnd);
 
     enum
     {
@@ -91,6 +92,7 @@ private:
     std::wstring m_pid;
     std::wstring m_process;
     CLogView* m_pLogView;
+    HWND m_hParentWnd;
     CEdit m_editMessage;
     CBrush m_backgroundBrush;
     
