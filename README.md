@@ -1,3 +1,23 @@
+DebugView++ View Message
+------------------------------
+
+This fork adds a __View Message__ option to the original DebugView++ v1.9.0.28
+
+- Right-click any log message and select __View Message__ to open in a dedicated window
+- Shows message details: line number, timestamp, process ID, process name, and full text
+- Standard text operations (Ctrl+C, Ctrl+A)
+- Independent resizable and movable message windows
+- Multiple message viewers support automatic window tiling to prevent overlap
+- Text splitting for comma-separated or pipe-separated values
+- JSON and XML formatting with proper indentation
+- __Close Messages__ option batch closes open message viewers
+
+Demo
+-----------
+![DebugView++ Message View demo](art/debugviewppvdemo.gif "DebugView++ Message View demo")
+
+#### Original DebugViewPP Documentation:
+
 -- Notice:
 
 * I'm looking for maintainers, so if you would like to join me in bugfixing or adding features, please let me know.

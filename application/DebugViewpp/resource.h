@@ -135,6 +135,8 @@
 #define IDC_SPLIT_PIPE 321
 #define IDC_FORMAT_JSON 322
 #define IDC_FORMAT_XML 323
+#define IDC_FORK_INFO 324
+#define IDC_FORK_URL 325
 
 // Next default values for new objects
 //

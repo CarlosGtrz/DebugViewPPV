@@ -19,6 +19,7 @@ BOOL CAboutDlg::OnInitDialog(CWindow /*wndFocus*/, LPARAM /*lInitParam*/)
     CenterWindow(GetParent());
     m_srclink.SubclassWindow(GetDlgItem(IDC_DEBUGVIEW_SRC_URL));
     m_link.SubclassWindow(GetDlgItem(IDC_DEBUGVIEW_URL));
+    m_forklink.SubclassWindow(GetDlgItem(IDC_FORK_URL));
     std::array<int, 4> version = {VERSION};
     SetDlgItemText(IDC_VERSION, WStr(wstringbuilder() << L"DebugView++ V" << version[0] << L"." << version[1] << L"." << version[2] << L"." << version[3]));
     SetDlgItemText(IDC_DATE, _T(__DATE__));

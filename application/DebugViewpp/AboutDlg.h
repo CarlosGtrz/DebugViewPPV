@@ -33,6 +33,7 @@ public:
 private:
     CHyperLink m_srclink;
     CHyperLink m_link;
+    CHyperLink m_forklink;
 };
 
 } // namespace debugviewpp

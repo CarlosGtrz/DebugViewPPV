@@ -255,19 +255,21 @@ IDR_BOOKMARK            ICON                    "res\\Bookmark.ico"
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 210, 127
+IDD_ABOUTBOX DIALOGEX 0, 0, 210, 145
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About DebugView++"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,140,108,50,14
+    DEFPUSHBUTTON   "OK",IDOK,140,126,50,14
     ICON            IDR_MAINFRAME,IDC_STATIC,21,26,20,20
-    GROUPBOX        "",IDC_STATIC,7,7,193,91
+    GROUPBOX        "",IDC_STATIC,7,7,193,109
     CTEXT           "DebugView++ VX.X",IDC_VERSION,54,22,118,8
     CTEXT           "<date replaced in CAboutDlg::OnInitDialog>",IDC_DATE,54,35,118,8
     CTEXT           "(c) Gert-Jan de Vos and Jan Wilmans",IDC_STATIC,54,48,118,8
     CTEXT           "https://github.com/djeedjay/DebugViewPP",IDC_DEBUGVIEW_SRC_URL,16,68,156,8
     CTEXT           "http://debugviewpp.wordpress.com/",IDC_DEBUGVIEW_URL,16,82,156,8
+    CTEXT           "This is a fork that adds a View Message feature",IDC_FORK_INFO,16,96,156,8
+    CTEXT           "https://github.com/CarlosGtrz/DebugViewPPV",IDC_FORK_URL,16,106,156,8
 END
 
 IDD_FILTER DIALOGEX 0, 0, 381, 241
