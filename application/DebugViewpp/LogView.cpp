@@ -474,6 +474,26 @@ LRESULT CLogView::OnClick(NMHDR* pnmh)
 
 void CLogView::OnLButtonDown(UINT flags, CPoint point)
 {
+    // Handle Ctrl+Click to open message viewer
+    if (flags & MK_CONTROL)
+    {
+        LVHITTESTINFO info;
+        info.flags = 0;
+        info.pt = point;
+        SubItemHitTest(&info);
+        
+        if ((info.flags & LVHT_ONITEM) != 0 && info.iItem >= 0 && static_cast<size_t>(info.iItem) < m_logLines.size())
+        {
+            // Select the item under the cursor
+            SetItemState(-1, 0, LVIS_SELECTED); // Clear all selections
+            SetItemState(info.iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+            
+            // Open message viewer for this item
+            OnViewMessage(0, ID_VIEW_MESSAGE, *this);
+        }
+        return;
+    }
+
     if ((flags & MK_SHIFT) == 0 || m_highlightText.empty())
     {
         SetMsgHandled(win32::False);
